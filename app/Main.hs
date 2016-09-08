@@ -10,6 +10,7 @@ import Shelly
 import Data.Time.Format
 import Data.Time.LocalTime
 import Data.Time.Clock
+import Network.HostName
 import qualified Data.Text as T
 default (T.Text)
 
@@ -18,6 +19,7 @@ ls' = run_ (fromText "ls")
 gpg = run_ (fromText "gpg2")
 tar = run_ (fromText "tar")
 
+dthrnow :: IO T.Text
 dthrnow = do
   ct <- getCurrentTime
   tz <- getTimeZone ct
@@ -29,6 +31,7 @@ main = do
   args <- getArgs
   home <- shelly $ get_env "HOME"
   dthr <- dthrnow
+  hostname <- getHostName
   case home of
     Just h  -> shelly $ silently $ do
       tar ["-zcvf", tgz, (h <> "/notes")]
@@ -38,6 +41,6 @@ main = do
       rm (fromText $ tgz <> ".asc")
       liftIO $ putStrLn message
         where
-          tgz = h <> "/drive/notes/notes-" <> dthr <> ".tar.gz"
+          tgz = h <> "/drive/notes/notes-" <> dthr <> "-" <> T.pack hostname <> ".tar.gz"
           message = T.unpack $ tgz <> ".asc is bkp!"
     Nothing -> putStrLn "Oops"
